@@ -70,8 +70,82 @@ public class LimitsConfigurationController {
 
 ```
 
+#### Currency Exchange Service 
+Used dependencies are `Spring Web`, `Config Client`. Optional Dependencies `Spring Boot DevTools`, `Spring Boot Actuator`.
+
+- To make use of db using `h2database` with `spring-data-jpa`.
 
 
+#### Currency Conversion Service 
+
+Used dependencies are `Spring Web`, `Config Client`. Optional Dependencies `Spring Boot DevTools`, `Spring Boot Actuator`.
+
+
+
+#### Invoke other micro-services using RestTemplate()
+
+```java
+
+@RestController
+public class CorrencyConversionController {
+	
+	@GetMapping("/currency-converter/from/{from}/to/{to}/quantity/{quantity}")
+	public CurrencyConversionBean convertCurrency(@PathVariable String from, @PathVariable String to, @PathVariable BigDecimal quantity) {
+		
+		Map<String, String> uriVariables = new HashMap<String, String>();
+		uriVariables.put("from", from);
+		uriVariables.put("to", to);
+		
+		ResponseEntity<CurrencyConversionBean> responseEntity = new RestTemplate()
+				.getForEntity("http://localhost:8000/currency-exchange/from/{from}/to/{to}", CurrencyConversionBean.class, uriVariables);
+		
+		CurrencyConversionBean response = responseEntity.getBody();
+		
+		
+		return new CurrencyConversionBean(response.getId(), from, to, response.getConversionMultiple(), quantity, quantity.multiply(response.getConversionMultiple()), response.getPort());
+	}
+
+}
+
+```
+
+#### Invoke other micro-services using FEIGN
+
+Create a interface for proxy
+
+```java
+@FeignClient(name = "currency-exchange-service", url = "localhost:8000")
+public interface CurrencyExchangeServiceProxy {
+	
+	@GetMapping("/currency-exchange/from/{from}/to/{to}")
+	public CurrencyConversionBean retrieveExchnageValue(@PathVariable String from, @PathVariable String to);
+
+}
+```
+
+And make use of this proxy instead of RestTemplate
+
+```java
+@RestController
+public class CorrencyConversionController {
+	
+	@Autowired
+	private CurrencyExchangeServiceProxy proxy;
+	
+	// Same as above code but using feign proxy
+	@GetMapping("/currency-converter-feign/from/{from}/to/{to}/quantity/{quantity}")
+	public CurrencyConversionBean convertCurrencyFeign(@PathVariable String from, @PathVariable String to, @PathVariable BigDecimal quantity) {
+		
+		CurrencyConversionBean response = proxy.retrieveExchnageValue(from, to);
+		
+		
+		return new CurrencyConversionBean(response.getId(), from, to, response.getConversionMultiple(), quantity, quantity.multiply(response.getConversionMultiple()), response.getPort());
+	}
+
+}
+```
+
+Feign helps us to simplyfy the client code to talk to restful services.
 
 
 
