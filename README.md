@@ -257,6 +257,20 @@ Repeat above steps for `currency-exchange-service`
 
 All Instance should be running with eureka after starting services.
 
+#### Distributing calls using eureka and ribbon
+
+Start multiple instance of same service on different port and you will see with the help of naming server load is being distributed.
+
+### API Gateways
+
+- Authentication, Authorization And Security
+- Rate Limits 
+- Fault tolearation 
+- Service Aggregation
+
+#### Setting up zuul api gateway
+
+
 
 
 
